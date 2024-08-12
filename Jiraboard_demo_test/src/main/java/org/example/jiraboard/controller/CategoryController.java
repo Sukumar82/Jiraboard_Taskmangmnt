@@ -1,5 +1,6 @@
 package org.example.jiraboard.controller;
 
+import org.example.jiraboard.exception.ResourceNotFoundException;
 import org.example.jiraboard.model.Category;
 import org.example.jiraboard.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class CategoryController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
         Category category = categoryService.getCategoryById(id);
+        if (category == null) {
+            throw new ResourceNotFoundException("Category not found with ID: " + id);
+        }
         return ResponseEntity.ok(category);
     }
 
@@ -46,8 +50,12 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> deleteCategory(@PathVariable Long id) {
+        try {
+            categoryService.deleteCategory(id);
+            return ResponseEntity.ok("Category deleted successfully.");
+        } catch (ResourceNotFoundException ex) {
+            throw new ResourceNotFoundException("Category not found with ID: " + id);
+        }
     }
 }

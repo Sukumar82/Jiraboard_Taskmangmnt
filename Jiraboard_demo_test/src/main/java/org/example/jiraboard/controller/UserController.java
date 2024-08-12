@@ -1,5 +1,6 @@
 package org.example.jiraboard.controller;
 
+import org.example.jiraboard.exception.ResourceNotFoundException;
 import org.example.jiraboard.model.User;
 import org.example.jiraboard.service.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<User> createUser(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setPassword((user.getPassword()));
         User createdUser = userService.createUser(user);
         return ResponseEntity.ok(createdUser);
     }
@@ -45,6 +46,9 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found with ID: " + id);
+        }
         return ResponseEntity.ok(user);
     }
 
@@ -56,14 +60,18 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
-        userDetails.setPassword(passwordEncoder.encode(userDetails.getPassword()));
+        userDetails.setPassword((userDetails.getPassword()));
         User updatedUser = userService.updateUser(id, userDetails);
         return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        try {
+            userService.deleteUser(id);
+            return ResponseEntity.ok("User deleted successfully.");
+        } catch (ResourceNotFoundException ex) {
+            throw new ResourceNotFoundException("User not found with ID: " + id);
+        }
     }
 }

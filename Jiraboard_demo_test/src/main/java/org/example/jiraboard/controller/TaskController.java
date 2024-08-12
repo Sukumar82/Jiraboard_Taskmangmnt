@@ -1,5 +1,6 @@
 package org.example.jiraboard.controller;
 
+import org.example.jiraboard.exception.ResourceNotFoundException;
 import org.example.jiraboard.model.Task;
 import org.example.jiraboard.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ public class TaskController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
         Task task = taskService.getTaskById(id);
+        if (task == null) {
+            throw new ResourceNotFoundException("Task not found with ID: " + id);
+        }
         return ResponseEntity.ok(task);
     }
 
@@ -46,8 +50,12 @@ public class TaskController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-        taskService.deleteTask(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<String> deleteTask(@PathVariable Long id) {
+        try {
+            taskService.deleteTask(id);
+            return ResponseEntity.ok("Task deleted successfully.");
+        } catch (ResourceNotFoundException ex) {
+            throw new ResourceNotFoundException("Task not found with ID: " + id);
+        }
     }
 }
